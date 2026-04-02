@@ -24,7 +24,7 @@ len(df_clean.columns) # 67 fields left
 # standardize date fields
 date_columns = [col for col in df_clean.columns if 'Date' in col]
 date_columns
-# first look at close date
+# first convert close date to datetime
 df_clean[date_columns[0]].isna().sum() # most of the close dates are missing (24777 in 32334) (OK)
 closed_listings = df_clean[date_columns[0]].notna() # mask for filtering
 df_clean[closed_listings][date_columns[0]] = pd.to_datetime(df_clean[closed_listings][date_columns[0]]) # TODO: set with copy warning
@@ -33,4 +33,11 @@ df_clean[date_columns[1]].isna().sum() # 315 change dates missing (OK)
 changed_listings = df_clean[date_columns[1]].notna()
 df_clean[changed_listings][date_columns[1]] = pd.to_datetime(df_clean[changed_listings][date_columns[1]]) # TODO: set with copy warning
 # then purchase contract date
+df_clean[date_columns[2]].isna().sum() # 18731 listings not yet purchased
+purchased_listings = df_clean[date_columns[2]].notna()
+df_clean[purchased_listings][date_columns[2]] = pd.to_datetime(df_clean[purchased_listings][date_columns[2]]) # TODO: set with copy warning
 # then listing contract date
+df_clean[date_columns[-1]].isna().sum() # all listings have established proper contracts between seller and seller's broker, no missing values
+df_clean[date_columns[-1]] = pd.to_datetime(df_clean[date_columns[-1]])
+# take a final look
+df_clean[date_columns]
