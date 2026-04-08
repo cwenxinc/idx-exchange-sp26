@@ -43,3 +43,20 @@ for field in key_fields:
     plt.title(f'Boxplot of {field}')
     plt.ylabel(field)
     plt.show()
+
+# add in mortgage rate data
+# derive year-month key from close date
+sold_residential['year_month'] = pd.to_datetime(sold_residential['CloseDate']).dt.to_period('M')
+# pull mortgage rate data from FRED and then create a matching year-month key
+url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US"
+mortgage = pd.read_csv(url)
+mortgage.columns = ['date', 'rate_30yr_fixed']
+mortgage['year_month'] = pd.to_datetime(mortgage['date']).dt.to_period('M')
+mortgage_monthly = mortgage.groupby('year_month')['rate_30yr_fixed'].mean().reset_index()
+# merge monthly sold transactions and mortgage rates
+sold_residential_with_rates = sold_residential.merge(mortgage_monthly, on='year_month', how='left')
+sold_residential_with_rates.shape # right dimensions
+sold_residential_with_rates.columns # rates properly added as a column
+sold_residential_with_rates['rate_30yr_fixed'].isnull().sum() # no null values after merging (OK)
+
+sold_residential_with_rates.to_csv("raw-data/sold_residential_with_rates_raw.csv", index=False)
