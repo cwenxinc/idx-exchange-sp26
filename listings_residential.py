@@ -26,8 +26,8 @@ fields_high_null_perc = listings_residential.columns[mask_high_null_perc]
 key_fields = ['ClosePrice', 'ListPrice', 'OriginalListPrice', 'DaysOnMarket', # market-related fields
               'LivingArea', 'LotSizeAcres', 'BedroomsTotal', 'BathroomsTotalInteger', 'YearBuilt'] # property-related fields
 # percentiles
-listings_residential[key_fields].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # some properties have abnormally high bedroom or bathroom counts (e.g., 94 bedrooms; 2208 bathrooms)
-                                                                                   # some properties have year built in the future (e.g., 2028)
+listings_residential[key_fields].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # some properties have abnormally high bedroom or bathroom counts (e.g., max 94 bedrooms; max 2208 bathrooms)
+                                                                                   # some properties have year built in the future (e.g., max 2028)
 # TODO: histograms
 for field in key_fields: 
     listings_residential[field].hist(bins=30)
