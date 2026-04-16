@@ -125,12 +125,12 @@ upper = q3 + 1.5 * iqr
 sold_valid['outlier_flag'] = ((sold_valid[core_fields] < lower) | (sold_valid[core_fields] > upper)).any(axis=1) # 60197 records
 sold_reliable = sold_valid[~sold_valid['outlier_flag']]
 sold_reliable.shape # 320521 records left
-sold_reliable[core_fields].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # mean and median decreased across the board
+sold_reliable[core_fields].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # mean and median have gone down across all core fields
 
 # (iii) remove records missing core values
-mask_core_missing = ~(sold_reliable['missing_price_flag'] | 
-                      sold_reliable['missing_living_space_flag']) # count is smaller than expected because some missing records have already been removed in the validation step
-sold_core_not_missing = sold_reliable[mask_core_missing]
+mask_core_missing = (sold_reliable['missing_price_flag'] | 
+                     sold_reliable['missing_living_space_flag']) # count is smaller than expected because some missing records have already been removed in the validation step
+sold_core_not_missing = sold_reliable[~mask_core_missing]
 sold_core_not_missing.shape # 320422 records left
 sold_core_not_missing.shape[0] / sold_full.shape[0] # around 80 percent of records retained
 
