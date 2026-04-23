@@ -211,7 +211,6 @@ sold_clean.groupby('PropertySubType')[close_metrics[0]].value_counts().loc[core_
 sold_clean.groupby('PropertySubType')[close_metrics[1]].value_counts().loc[core_subtypes] # sales peaks for each subtype occur in different months
 
 # (iii) by region
-# county or parish
 sold_clean['CountyOrParish'].unique() # 59 counties/parishes
 core_county_or_parish = sold_clean['CountyOrParish'].value_counts().head(9).index # focus on counties/parishes with the most sales (for now)
 # price
@@ -223,14 +222,3 @@ sold_clean.groupby('CountyOrParish')[time_metrics[1]].describe(percentiles=[0.1,
 sold_clean.groupby('CountyOrParish')[time_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
 # close date
 sold_clean.groupby('CountyOrParish')[close_metrics[1]].value_counts().loc[core_county_or_parish]
-
-# TODO: major marketing area defined by the MLS
-sold_clean['MLSAreaMajor'].unique() # 1067 areas (more granular than government defined regions)
-sold_clean['MLSAreaMajor'].value_counts() # many undefined records
-                                          # southwest riverside county has the most sales
-
-# (iv) by agent
-# TODO: list office
-sold_clean['ListOfficeName'].unique() # 16934 list agents
-# TODO: buyer office
-sold_clean['BuyerOfficeName'].unique() # 19241 buyer agents
