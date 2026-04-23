@@ -97,7 +97,7 @@ sold_full['outside_ca_flag'] = (~sold_full['Longitude'].between(ca_lon[0], ca_lo
 sold_full['missing_original_list_price_flag'] = sold_full['OriginalListPrice'].isna() # 721 records
 sold_full['missing_close_price_flag'] = sold_full['ClosePrice'].isna() # 2 records
 sold_full['invalid_price_flag'] = (sold_full['OriginalListPrice'] <= 0) | (sold_full['ListPrice'] <= 0) | (sold_full['ClosePrice'] <= 0) # 3 records
-# look into time to sale
+# look into time to sell
 sold_full['negative_dom_flag'] = sold_full['DaysOnMarket'] < 0 # 46 records
 # look into living space
 sold_full['missing_living_space_flag'] = sold_full['LivingArea'].isna() # OK to miss bedroom or bathroom information; 229 records
@@ -164,21 +164,73 @@ Part V: Compute market metrics
 sold_clean['price_ratio'] = sold_clean['ClosePrice'] / sold_clean['OriginalListPrice']
 sold_clean['close_to_original_list_ratio'] = sold_clean['ClosePrice'] / sold_clean['OriginalListPrice']
 sold_clean['price_per_sq_ft'] = sold_clean['ClosePrice'] / sold_clean['LivingArea']
-sold_clean[['price_ratio', 'close_to_original_list_ratio', 'price_per_sq_ft']].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # price ratio tends to be close to 1 (healthy market)
+price_metrics = ['price_ratio', 'close_to_original_list_ratio', 'price_per_sq_ft']
 
-# metrics related to time to sale
+# metrics related to time to sell
 sold_clean['days_on_market'] = sold_clean['DaysOnMarket'] # differentiate metric from data field
 sold_clean['listing_to_contract'] = (sold_clean['PurchaseContractDate'] - sold_clean['ListingContractDate']).dt.days
 sold_clean['contract_to_close'] = (sold_clean['CloseDate'] - sold_clean['PurchaseContractDate']).dt.days
-sold_clean[['days_on_market', 'listing_to_contract', 'contract_to_close']].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # property listed, contract signed, and deal closed can all happen in as short as one day
-                                                                                                                             # contract to close typically takes shorter than listing to contract
+time_metrics = ['days_on_market', 'listing_to_contract', 'contract_to_close']
 
 # metrics related to close date
 sold_clean['close_year'] = sold_clean['CloseDate'].dt.year
 sold_clean['close_month'] = sold_clean['CloseDate'].dt.month
-sold_clean['close_year_month'] = sold_clean['year_month'] # recall that mortgage rates are merged based on close date
-sold_clean['close_yrmo'] = sold_clean['CloseDate'].dt.strftime("%y%m").astype(int) # year month in alternative format
-sold_clean['close_year'].value_counts() # 2024 seems to have the most sales so far
-sold_clean['close_month'].value_counts() # March seems to have the most sales so far, followed by May and July
-                                         # winter months seem to have fewer sales
-                                         # keep in mind that we don't have data from the rest of 2026 yet
+sold_clean['close_year_month'] = sold_clean['year_month'] # recall that mortgage rates are merged based on a year-month key derived from close date
+sold_clean['close_yrmo'] = sold_clean['CloseDate'].dt.strftime("%y%m") # year month in alternative format
+close_metrics = ['close_year', 'close_month']
+
+
+"""
+Part VI: Analyze market metrics 
+"""
+
+# (i) overall
+sold_clean[price_metrics].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # price ratio tends to be close to 1 (healthy market)
+sold_clean[time_metrics].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]) # property listed, contract signed, and deal closed can all happen in as short as one day
+                                                                           # contract to close typically takes shorter than listing to contract
+                                                                           # NOTE: max DOM is considerably shorter than max listing to contracy
+sold_clean[close_metrics[0]].value_counts() # 2024 has the most sales so far
+sold_clean[close_metrics[1]].value_counts() # March has the most sales so far, followed by May and July
+                                            # winter months seem to have fewer sales
+                                            # keep in mind that we don't have data from the rest of 2026 yet
+
+# (ii) by property type
+sold_clean['PropertyType'].unique() # recall that we've fitered for residential transactions
+sold_clean['PropertySubType'].unique() # 20 subtypes: single family residence (i.e. SFR, the benchmark); condominium (i.e. condo); townhouse; manufactured on land, manufactured home, stock cooperative (residents buy shares in the housing corporation); duplex, triplex, quadruplex, loft, studio (often multi-family); other types including mobile home, mixed use, boat slip (single-boat parking space at a dock), farm, co-ownership, deeded parking (parking space with a legal deed), own your own (i.e. OYO, residents hold exclusive rights to the unit), cabin, time share (vacation property owned and used by multiple buyers during specific periods); have several NaNs
+core_subtypes = sold_clean['PropertySubType'].value_counts().head(6).index # focus on subtypes with the most sales (for now)
+# price
+sold_clean.groupby('PropertySubType')[price_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # NOTE: variation in SFR, condo, and townhouse is heavily inflated by outliers
+                                                                                                                             # SFRs have higher price ratio than most of the other subtypes
+sold_clean.groupby('PropertySubType')[price_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # townhouses and condos have higher unit price than SFRs; manufactured homes are the cheapest in terms of unit price
+# time to sell
+sold_clean.groupby('PropertySubType')[time_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # condos and manufactured take longer to sell; SFRs move through the sale cycle the fastest  
+sold_clean.groupby('PropertySubType')[time_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # SFRs and townhouses take shorter to reach accepted offer
+sold_clean.groupby('PropertySubType')[time_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # stock co-ops have considerably longer average escrow period
+# close date
+sold_clean.groupby('PropertySubType')[close_metrics[0]].value_counts().loc[core_subtypes] # all subtypes have relatively more sales in 2024 than 2025
+sold_clean.groupby('PropertySubType')[close_metrics[1]].value_counts().loc[core_subtypes] # sales peaks for each subtype occur in different months
+
+# (iii) by region
+# county or parish
+sold_clean['CountyOrParish'].unique() # 59 counties/parishes
+core_county_or_parish = sold_clean['CountyOrParish'].value_counts().head(9).index # focus on counties/parishes with the most sales (for now)
+# price
+sold_clean.groupby('CountyOrParish')[price_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
+sold_clean.groupby('CountyOrParish')[price_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish] # Santa Clara has the highest unit price, not Los Angeles!
+# time to sell
+sold_clean.groupby('CountyOrParish')[time_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish] # Santa Clara also moves through the sale cycle the fastest
+sold_clean.groupby('CountyOrParish')[time_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
+sold_clean.groupby('CountyOrParish')[time_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
+# close date
+sold_clean.groupby('CountyOrParish')[close_metrics[1]].value_counts().loc[core_county_or_parish]
+
+# TODO: major marketing area defined by the MLS
+sold_clean['MLSAreaMajor'].unique() # 1067 areas (more granular than government defined regions)
+sold_clean['MLSAreaMajor'].value_counts() # many undefined records
+                                          # southwest riverside county has the most sales
+
+# (iv) by agent
+# TODO: list office
+sold_clean['ListOfficeName'].unique() # 16934 list agents
+# TODO: buyer office
+sold_clean['BuyerOfficeName'].unique() # 19241 buyer agents
