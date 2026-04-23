@@ -162,9 +162,8 @@ Part V: Compute market metrics
 
 # metrics related to price
 sold_clean['price_ratio'] = sold_clean['ClosePrice'] / sold_clean['OriginalListPrice']
-sold_clean['close_to_original_list_ratio'] = sold_clean['ClosePrice'] / sold_clean['OriginalListPrice']
 sold_clean['price_per_sq_ft'] = sold_clean['ClosePrice'] / sold_clean['LivingArea']
-price_metrics = ['price_ratio', 'close_to_original_list_ratio', 'price_per_sq_ft']
+price_metrics = ['price_ratio', 'price_per_sq_ft']
 
 # metrics related to time to sell
 sold_clean['days_on_market'] = sold_clean['DaysOnMarket'] # differentiate metric from data field
@@ -201,7 +200,7 @@ core_subtypes = sold_clean['PropertySubType'].value_counts().head(6).index # foc
 # price
 sold_clean.groupby('PropertySubType')[price_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # NOTE: variation in SFR, condo, and townhouse is heavily inflated by outliers
                                                                                                                              # SFRs have higher price ratio than most of the other subtypes
-sold_clean.groupby('PropertySubType')[price_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # townhouses and condos have higher unit price than SFRs; manufactured homes are the cheapest in terms of unit price
+sold_clean.groupby('PropertySubType')[price_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # townhouses and condos have higher unit price than SFRs; manufactured homes are the cheapest in terms of unit price
 # time to sell
 sold_clean.groupby('PropertySubType')[time_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # condos and manufactured take longer to sell; SFRs move through the sale cycle the fastest  
 sold_clean.groupby('PropertySubType')[time_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_subtypes] # SFRs and townhouses take shorter to reach accepted offer
@@ -215,7 +214,7 @@ sold_clean['CountyOrParish'].unique() # 59 counties/parishes
 core_county_or_parish = sold_clean['CountyOrParish'].value_counts().head(9).index # focus on counties/parishes with the most sales (for now)
 # price
 sold_clean.groupby('CountyOrParish')[price_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
-sold_clean.groupby('CountyOrParish')[price_metrics[2]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish] # Santa Clara has the highest unit price, not Los Angeles!
+sold_clean.groupby('CountyOrParish')[price_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish] # Santa Clara has the highest unit price, not Los Angeles!
 # time to sell
 sold_clean.groupby('CountyOrParish')[time_metrics[0]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish] # Santa Clara also moves through the sale cycle the fastest
 sold_clean.groupby('CountyOrParish')[time_metrics[1]].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9]).loc[core_county_or_parish]
